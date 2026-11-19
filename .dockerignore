@@ -16,6 +16,7 @@ origin_disasm.txt
 .git/
 .vs/
 .idea/
+client-us-2-51/
 **/__pycache__/
 *.log
 *.tmp
