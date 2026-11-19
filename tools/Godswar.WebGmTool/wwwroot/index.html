@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GodsWar GM Web Panel</title>
+  <style>
+    :root {
+      --bg: #0f141c;
+      --panel: #171f2b;
+      --border: #283347;
+      --text: #e6edf7;
+      --muted: #8fa1bc;
+      --accent: #4c8dff;
+      --accent-hover: #3575e6;
+      --danger: #d9534f;
+      --ok: #3fb950;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg); color: var(--text); font-size: 14px;
+    }
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 20px; background: var(--panel); border-bottom: 1px solid var(--border);
+    }
+    header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+    .tabs { display: flex; gap: 6px; padding: 10px 20px; background: #131922; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .tab {
+      background: transparent; color: var(--muted); border: 1px solid var(--border);
+      padding: 7px 14px; border-radius: 6px; cursor: pointer; font-weight: 500;
+    }
+    .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    main { padding: 18px 20px; max-width: 1400px; margin: 0 auto; }
+    .grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 16px; }
+    @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px;
+    }
+    .card h2 { margin: 0 0 12px; font-size: 14px; color: #fff; }
+    .row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+    input, select {
+      background: #0d1219; color: var(--text); border: 1px solid var(--border);
+      border-radius: 5px; padding: 6px 9px; font-size: 13px;
+    }
+    button {
+      background: var(--accent); color: #fff; border: none; border-radius: 5px;
+      padding: 7px 12px; cursor: pointer; font-size: 13px; font-weight: 500;
+    }
+    button:hover { background: var(--accent-hover); }
+    button.danger { background: var(--danger); }
+    button.secondary { background: #263144; }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th, td { padding: 7px 8px; border-bottom: 1px solid var(--border); text-align: left; }
+    th { color: var(--muted); font-weight: 600; }
+    tr.clickable { cursor: pointer; }
+    tr.clickable:hover, tr.selected { background: #202b3d; }
+    .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+    .field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+    .field input { width: 100%; }
+    .toast {
+      position: fixed; right: 20px; bottom: 20px; padding: 10px 14px; border-radius: 6px;
+      background: #222c3c; border: 1px solid var(--border); display: none; z-index: 99;
+    }
+    .toast.ok { border-color: var(--ok); color: #b7f5c0; }
+    .toast.err { border-color: var(--danger); color: #ffc1be; }
+    .hidden { display: none; }
+    .muted { color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>GodsWar GM Web Panel</h1>
+    <span class="muted" id="dbStatus">Connecting...</span>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="characters">Characters &amp; Gear</button>
+    <button class="tab" data-tab="items">Item Catalog</button>
+    <button class="tab" data-tab="realms">Realms</button>
+    <button class="tab" data-tab="loot">Monster Loot</button>
+    <button class="tab" data-tab="quests">Quest Rewards</button>
+  </nav>
+
+  <main>
+    <!-- CHARACTERS TAB -->
+    <section id="tab-characters">
+      <div class="grid">
+        <div class="card">
+          <h2>Characters</h2>
+          <div class="row">
+            <input id="charSearch" placeholder="Search character or username..." style="flex:1" />
+            <button onclick="loadCharacters()">Search</button>
+          </div>
+          <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Account</th><th>Lv</th><th>Silver</th><th>B-Gold</th></tr></thead>
+            <tbody id="charBody"></tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h2 id="selectedCharTitle">Select a character</h2>
+          <div id="charEditor" class="hidden">
+            <div class="form-grid">
+              <div class="field"><label>Level (1-200)</label><input id="edLevel" type="number" min="1" max="200" /></div>
+              <div class="field"><label>Silver (Money)</label><input id="edMoney" type="number" min="0" /></div>
+              <div class="field"><label>B-Gold (Stone)</label><input id="edStone" type="number" min="0" /></div>
+              <div class="field"><label>Skill Points</label><input id="edSkillPoint" type="number" min="0" /></div>
+              <div class="field"><label>GM Level</label><input id="edGm" type="number" min="0" max="10" /></div>
+              <div class="field"><label>Map ID</label><input id="edMap" type="number" /></div>
+              <div class="field"><label>Pos X</label><input id="edPosX" type="number" step="0.1" /></div>
+              <div class="field"><label>Pos Z</label><input id="edPosZ" type="number" step="0.1" /></div>
+            </div>
+            <div class="row">
+              <button onclick="saveCharacter()">Save Character</button>
+              <span class="muted">Relog character in game to load DB edits.</span>
+            </div>
+
+            <h2 style="margin-top:16px">Grant Item to Bag</h2>
+            <div class="row">
+              <input id="grantItemId" type="number" placeholder="Item ID (e.g. 10151)" style="width:160px" />
+              <input id="grantStack" type="number" value="1" min="1" max="999" style="width:80px" />
+              <button onclick="grantItem()">Send to Bag</button>
+            </div>
+
+            <h2 style="margin-top:14px">Inventory</h2>
+            <table>
+              <thead><tr><th>Loc</th><th>Slot</th><th>Item ID</th><th>Name</th><th>Qty</th><th></th></tr></thead>
+              <tbody id="charItemsBody"></tbody>
+            </table>
+
+            <h2 style="margin-top:14px">Pets</h2>
+            <table>
+              <thead><tr><th>ID</th><th>Name</th><th>Species</th><th>Lv</th><th>Aptitude</th><th>Rank</th><th>State</th></tr></thead>
+              <tbody id="charPetsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ITEM CATALOG TAB -->
+    <section id="tab-items" class="hidden">
+      <div class="card">
+        <h2>Item Catalog</h2>
+        <div class="row">
+          <input id="itemSearch" placeholder="Search item ID, name, or kind..." style="flex:1; max-width:420px" />
+          <button onclick="loadItems()">Search</button>
+          <span class="muted" id="itemTargetNote">Select a character in Characters tab to enable quick-send.</span>
+        </div>
+        <table>
+          <thead><tr><th>ID</th><th>Name</th><th>Kind</th><th>Min Lv</th><th>Slot</th><th>Action</th></tr></thead>
+          <tbody id="itemBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- REALMS TAB -->
+    <section id="tab-realms" class="hidden">
+      <div class="card">
+        <h2>Realms (public.server)</h2>
+        <p class="muted">Restart the game server container after renaming a realm.</p>
+        <table>
+          <thead><tr><th>ID</th><th>Name</th><th>Enabled</th><th></th></tr></thead>
+          <tbody id="realmBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- LOOT TAB -->
+    <section id="tab-loot" class="hidden">
+      <div class="grid">
+        <div class="card">
+          <h2>Monster Loot Tables</h2>
+          <div class="row">
+            <input id="lootSearch" placeholder="Search monster template key..." style="flex:1" />
+            <button onclick="loadLootTables()">Search</button>
+          </div>
+          <table>
+            <thead><tr><th>Template Key</th><th>Max Drops</th><th>Enabled</th><th>Rules</th></tr></thead>
+            <tbody id="lootBody"></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h2 id="lootRulesTitle">Select a loot table</h2>
+          <table>
+            <thead><tr><th>Idx</th><th>Item ID</th><th>Item Name</th><th>Chance (bp)</th><th>Qty</th><th>Enabled</th></tr></thead>
+            <tbody id="lootRulesBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUESTS TAB -->
+    <section id="tab-quests" class="hidden">
+      <div class="card">
+        <h2>Quest Reward Overrides (quest_reward_values)</h2>
+        <table>
+          <thead><tr><th>Quest ID</th><th>Experience</th><th>Talent Points</th><th>Silver</th><th>Gold</th><th></th></tr></thead>
+          <tbody id="questBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    let selectedChar = null;
+    const locNames = { 0: 'Equipped', 1: 'Bag', 2: 'Storage', 3: 'Warehouse' };
+
+    function toast(msg, ok = true) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast ' + (ok ? 'ok' : 'err');
+      el.style.display = 'block';
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.style.display = 'none', 3200);
+    }
+
+    async function api(url, opts) {
+      const res = await fetch(url, opts);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(err.error || res.statusText);
+      }
+      return res.json();
+    }
+
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
+        document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
+        if (btn.dataset.tab === 'realms') loadRealms();
+        if (btn.dataset.tab === 'loot') loadLootTables();
+        if (btn.dataset.tab === 'quests') loadQuests();
+        if (btn.dataset.tab === 'items') loadItems();
+      });
+    });
+
+    async function loadCharacters() {
+      const q = encodeURIComponent(document.getElementById('charSearch').value);
+      const rows = await api('/api/characters?q=' + q);
+      const tbody = document.getElementById('charBody');
+      tbody.innerHTML = '';
+      rows.forEach(c => {
+        const tr = document.createElement('tr');
+        tr.className = 'clickable' + (selectedChar?.id === c.id ? ' selected' : '');
+        tr.innerHTML = `<td>${c.id}</td><td>${c.name}</td><td>${c.username}</td><td>${c.level}</td><td>${c.money.toLocaleString()}</td><td>${c.stone.toLocaleString()}</td>`;
+        tr.onclick = () => selectCharacter(c);
+        tbody.appendChild(tr);
+      });
+      if (!selectedChar && rows.length > 0) selectCharacter(rows[0]);
+    }
+
+    async function selectCharacter(c) {
+      selectedChar = c;
+      document.getElementById('charEditor').classList.remove('hidden');
+      document.getElementById('selectedCharTitle').textContent = `${c.name} (ID ${c.id} | Account ${c.username})`;
+      document.getElementById('itemTargetNote').textContent = `Target bag: ${c.name} (ID ${c.id})`;
+      document.getElementById('edLevel').value = c.level;
+      document.getElementById('edMoney').value = c.money;
+      document.getElementById('edStone').value = c.stone;
+      document.getElementById('edSkillPoint').value = c.skillPoint;
+      document.getElementById('edGm').value = c.gm;
+      document.getElementById('edMap').value = c.map;
+      document.getElementById('edPosX').value = c.posX;
+      document.getElementById('edPosZ').value = c.posZ;
+      await Promise.all([loadCharacterItems(c.id), loadCharacterPets(c.id)]);
+    }
+
+    async function saveCharacter() {
+      if (!selectedChar) return;
+      try {
+        await api('/api/characters/' + selectedChar.id, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            level: +document.getElementById('edLevel').value,
+            money: +document.getElementById('edMoney').value,
+            stone: +document.getElementById('edStone').value,
+            skillPoint: +document.getElementById('edSkillPoint').value,
+            gm: +document.getElementById('edGm').value,
+            map: +document.getElementById('edMap').value,
+            posX: +document.getElementById('edPosX').value,
+            posZ: +document.getElementById('edPosZ').value
+          })
+        });
+        toast('Character updated');
+        loadCharacters();
+      } catch (e) { toast(e.message, false); }
+    }
+
+    async function loadCharacterItems(id) {
+      const items = await api(`/api/characters/${id}/items`);
+      const tbody = document.getElementById('charItemsBody');
+      tbody.innerHTML = '';
+      items.forEach(it => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${locNames[it.location] ?? it.location}</td><td>${it.slot}</td><td>${it.itemId}</td><td>${it.name}</td><td>${it.stack}</td><td><button class="danger" onclick="deleteItem(${id}, ${it.id})">Remove</button></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function grantItem(overrideId) {
+      if (!selectedChar) return toast('Select a character first', false);
+      const itemId = overrideId ?? +document.getElementById('grantItemId').value;
+      const stack = overrideId ? 1 : +document.getElementById('grantStack').value;
+      if (!itemId) return toast('Enter an Item ID', false);
+      try {
+        const r = await api(`/api/characters/${selectedChar.id}/items`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ itemId, stack })
+        });
+        toast(`Sent item #${itemId} to bag slot ${r.slot}`);
+        loadCharacterItems(selectedChar.id);
+      } catch (e) { toast(e.message, false); }
+    }
+
+    async function deleteItem(charId, instanceId) {
+      try {
+        await api(`/api/characters/${charId}/items/${instanceId}`, { method: 'DELETE' });
+        toast('Item removed');
+        loadCharacterItems(charId);
+      } catch (e) { toast(e.message, false); }
+    }
+
+    async function loadCharacterPets(id) {
+      const pets = await api(`/api/characters/${id}/pets`);
+      const tbody = document.getElementById('charPetsBody');
+      tbody.innerHTML = '';
+      pets.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${p.id}</td><td>${p.name}</td><td>${p.speciesId}</td><td>${p.level}</td><td>${p.aptitude}</td><td>${p.rank}</td><td>${p.activityState}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function loadItems() {
+      const q = encodeURIComponent(document.getElementById('itemSearch').value);
+      const rows = await api('/api/items?q=' + q);
+      const tbody = document.getElementById('itemBody');
+      tbody.innerHTML = '';
+      rows.forEach(it => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${it.id}</td><td>${it.name}</td><td>${it.kind}</td><td>${it.minLevel ?? '-'}</td><td>${it.slot}</td><td><button onclick="grantItem(${it.id})">Send to Bag</button></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function loadRealms() {
+      const rows = await api('/api/realms');
+      const tbody = document.getElementById('realmBody');
+      tbody.innerHTML = '';
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${r.id}</td><td><input id="realm-name-${r.id}" value="${r.name}" /></td><td><input id="realm-en-${r.id}" type="checkbox" ${r.enabled ? 'checked' : ''} /></td><td><button onclick="saveRealm(${r.id})">Save</button></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function saveRealm(id) {
+      try {
+        await api('/api/realms/' + id, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: document.getElementById('realm-name-' + id).value,
+            enabled: document.getElementById('realm-en-' + id).checked
+          })
+        });
+        toast('Realm saved (restart server to apply)');
+      } catch (e) { toast(e.message, false); }
+    }
+
+    async function loadLootTables() {
+      const q = encodeURIComponent(document.getElementById('lootSearch').value);
+      const rows = await api('/api/loot?q=' + q);
+      const tbody = document.getElementById('lootBody');
+      tbody.innerHTML = '';
+      rows.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.className = 'clickable';
+        tr.innerHTML = `<td>${t.templateKey}</td><td>${t.maximumDrops}</td><td>${t.enabled ? 'Yes' : 'No'}</td><td>${t.ruleCount}</td>`;
+        tr.onclick = () => loadLootRules(t.templateKey);
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function loadLootRules(key) {
+      document.getElementById('lootRulesTitle').textContent = 'Loot Rules: ' + key;
+      const rows = await api('/api/loot/' + encodeURIComponent(key));
+      const tbody = document.getElementById('lootRulesBody');
+      tbody.innerHTML = '';
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${r.lootIndex}</td><td>${r.itemId}</td><td>${r.itemName}</td><td>${r.chanceBasisPoints}</td><td>${r.minQty}-${r.maxQty}</td><td>${r.enabled ? 'Yes' : 'No'}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function loadQuests() {
+      const rows = await api('/api/quests');
+      const tbody = document.getElementById('questBody');
+      tbody.innerHTML = '';
+      rows.forEach(q => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${q.questId}</td><td><input id="qexp-${q.questId}" type="number" value="${q.experience}" style="width:100px" /></td><td><input id="qtp-${q.questId}" type="number" value="${q.talentPoints}" style="width:90px" /></td><td><input id="qsil-${q.questId}" type="number" value="${q.silver}" style="width:90px" /></td><td><input id="qgold-${q.questId}" type="number" value="${q.gold}" style="width:90px" /></td><td><button onclick="saveQuest(${q.questId})">Save</button></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function saveQuest(id) {
+      try {
+        await api('/api/quests/' + id, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            experience: +document.getElementById('qexp-' + id).value,
+            talentPoints: +document.getElementById('qtp-' + id).value,
+            silver: +document.getElementById('qsil-' + id).value,
+            gold: +document.getElementById('qgold-' + id).value
+          })
+        });
+        toast('Quest reward saved');
+      } catch (e) { toast(e.message, false); }
+    }
+
+    (async () => {
+      try {
+        await api('/api/health');
+        document.getElementById('dbStatus').textContent = 'Connected to PostgreSQL';
+        await loadCharacters();
+      } catch (e) {
+        document.getElementById('dbStatus').textContent = 'DB Error: ' + e.message;
+      }
+    })();
+  </script>
+</body>
+</html>

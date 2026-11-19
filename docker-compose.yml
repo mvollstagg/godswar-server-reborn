@@ -81,6 +81,21 @@ services:
       com.reborn.source.commit: ${GODSWAR_SOURCE_COMMIT:-unknown}
     restart: unless-stopped
 
+  gm-ui:
+    profiles: ["legacy-raw"]
+    build:
+      context: .
+      dockerfile: tools/Godswar.WebGmTool/Dockerfile
+    container_name: godswar-gm-ui
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      GODSWAR_POSTGRES_CONNECTION_STRING: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-godswar};Username=${POSTGRES_USER:-godswar};Password=${POSTGRES_PASSWORD:-godswar_dev_password};Pooling=true"
+    ports:
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
+
   b20h-prometheus:
     profiles: ["b20h-observation"]
     image: prom/prometheus:v3.13.1@sha256:3c42b892cf723fa54d2f262c37a0e1f80aa8c8ddb1da7b9b0df9455a35a7f893
