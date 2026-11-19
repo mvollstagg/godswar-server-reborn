@@ -1812,6 +1812,7 @@
         <Shenqi9011 ID="9011" Type="consume item" Texture="./Localization/en_us/UI/Texture/Icon2.gwo" Icon="36,0" Random="0" Distribution="0,0" Money="0" Overlap="99"/>
         <Shenqi9012 ID="9012" Type="consume item" Texture="./Localization/en_us/UI/Texture/Icon2.gwo" Icon="72,0" Random="0" Distribution="0,0" Money="0" Overlap="99"/>
         <Shenqi9013 ID="9013" Type="consume item" Texture="./Localization/en_us/UI/Texture/Icon2.gwo" Icon="936,0" Random="0" Distribution="0,0" Money="0" Overlap="99"/>
+        <Shenqi9014 ID="9014" Type="consume item" Texture="./Localization/en_us/UI/Texture/Icon2.gwo" Icon="972,0" Random="0" Distribution="0,0" Money="0" Overlap="99"/>
         <Congregation1 ID="9020" Type="consume item" Texture="./Localization/en_us/UI/Texture/Icon2.gwo" Icon="108,0" Random="25" Distribution="100,200" Money="0" Overlap="1" SpecialFlag="ExpBall"/>
         <Congregation2 ID="9021" Type="consume item" Texture="./Localization/en_us/UI/Texture/Icon2.gwo" Icon="144,0" Random="15" Distribution="100,200" Money="0" Overlap="1" SpecialFlag="ExpBall"/>
         <Congregation3 ID="9022" Type="consume item" Texture="./Localization/en_us/UI/Texture/Icon2.gwo" Icon="180,0" Random="5" Distribution="150,200" Money="0" Overlap="1" SpecialFlag="ExpBall"/>
