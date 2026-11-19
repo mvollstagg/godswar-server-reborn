@@ -63,3 +63,7 @@ _reference/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Runtime US 2.51 client logs and local user UI settings
+client-us-2-51/Log/
+client-us-2-51/Localization/en_us/Settings/User/*.xml

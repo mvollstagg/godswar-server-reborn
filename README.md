@@ -165,6 +165,16 @@ BOSS刷新正确接入频道广播
 
 修复歪比巴卜-_@《=g>d》
 
+2026/11/19
+
+Add US 2.51 English client (`client-us-2-51/`) configured for local Docker server (`127.1.1.110:5999`)
+
+Fix Docker clean startup on Windows checkouts: enforce LF on `database/postgres/*.sql`, make `libgssapi-krb5-2` apt install non-fatal in `Dockerfile`, and sync `item_templates` from canonical `item_template_content_definitions` in `PostgresItemTemplateBaselinePublisher.PetItems.cs`
+
+Fix US 2.51 client `SceneManager::create_entity` crashes by adding missing server NPCs to `NPC.INI`, missing monster definitions to `Monster.ini` (`Athens`, `Athens_Newbie`, `Marathon_All`, `Sparta`), and missing Mall item `9014` (`Mithril Ingot`) to `ItemBaseAttribute.xml` and `EquipName.dat`
+
+Add English Web GM Panel (`tools/Godswar.WebGmTool`) Dockerized as `gm-ui` on `127.0.0.1:8080` for managing characters, inventory/items, pets, realms, monster loot tables, and quest rewards
+
 
 
 
