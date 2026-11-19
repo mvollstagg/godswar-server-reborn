@@ -12,14 +12,6 @@ internal static partial class PostgresItemTemplateBaselinePublisher
             .OrderBy(static value => value)
             .ToArray();
 
-    // Migration 061 published these stock identities before the immutable
-    // item baseline reviewed them. Its generic consume-item projection used
-    // equipment_slot=-1; the canonical baseline uses the repository-wide
-    // consume-item value 0. Only that one exact legacy-field difference is
-    // eligible for an in-place compatibility upgrade.
-    private static readonly int[] LegacyPetItemSlotUpgradeIds =
-        [10106, 10108, 11003, 11004];
-
     private static async Task<IReadOnlyList<ItemTemplateDefinition>>
         ReconcileReviewedPetItemsAsync(
             NpgsqlConnection connection,
@@ -154,7 +146,19 @@ internal static partial class PostgresItemTemplateBaselinePublisher
             WHERE revision = @revision
               AND id = ANY(@itemIds)
             ORDER BY id
-            ON CONFLICT (id) DO NOTHING;
+            ON CONFLICT (id) DO UPDATE SET
+                kind = EXCLUDED.kind,
+                name_key = EXCLUDED.name_key,
+                display_name = EXCLUDED.display_name,
+                equipment_slot = EXCLUDED.equipment_slot,
+                class_ids = EXCLUDED.class_ids,
+                min_level = EXCLUDED.min_level,
+                max_level = EXCLUDED.max_level,
+                hand = EXCLUDED.hand,
+                skill_flag = EXCLUDED.skill_flag,
+                texture = EXCLUDED.texture,
+                icon = EXCLUDED.icon,
+                stats = EXCLUDED.stats;
             """,
             connection,
             transaction))
@@ -216,7 +220,7 @@ internal static partial class PostgresItemTemplateBaselinePublisher
             "itemIds",
             NpgsqlDbType.Array | NpgsqlDbType.Integer)
         {
-            Value = LegacyPetItemSlotUpgradeIds
+            Value = PetItemCompatibilityItemIds
         });
         await command.ExecuteNonQueryAsync(cancellationToken);
     }

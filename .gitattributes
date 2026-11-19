@@ -3,3 +3,4 @@
 # end of intermediate fragments.
 src/Godswar.Server/State/DatabaseMigrations/LegacySchemaBootstrap.*.sql -text whitespace=cr-at-eol,-blank-at-eof
 tools/docker/secure-healthcheck.sh text eol=lf
+database/postgres/*.sql text eol=lf

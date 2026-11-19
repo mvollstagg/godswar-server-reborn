@@ -19,9 +19,9 @@ WORKDIR /app
 ARG GODSWAR_SOURCE_COMMIT=unknown
 LABEL org.opencontainers.image.revision=$GODSWAR_SOURCE_COMMIT
 
-RUN apt-get update \
+RUN (apt-get update -o Acquire::Retries=1 -o Acquire::http::Timeout=5 \
     && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*) || true
 
 COPY --from=build /app/publish ./
 COPY appsettings.docker.json ./appsettings.json
